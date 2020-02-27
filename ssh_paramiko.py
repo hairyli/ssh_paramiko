@@ -3,7 +3,7 @@ import sys
 from paramiko import AuthenticationException
 from paramiko.client import SSHClient, AutoAddPolicy
 from paramiko.ssh_exception import NoValidConnectionsError
-
+import psutil
 
 class MySshClient():
     def __init__(self):
@@ -14,7 +14,7 @@ class MySshClient():
         try:
             # 设置允许连接known_hosts文件中的主机（默认连接不在known_hosts文件中的主机会拒绝连接抛出SSHException）
             self.ssh_client.set_missing_host_key_policy(AutoAddPolicy())
-            self.ssh_client.connect(host_ip,port=22,username=username,password=password)
+            self.ssh_client.connect(host_ip, port=22, username=username, password=password)
         except AuthenticationException:
             logging.warning('username or password error')
             return 1001
@@ -30,7 +30,12 @@ class MySshClient():
     # 此函数用于执行command参数中的命令并打印命令执行结果
     def execute_some_command(self,command):
         stdin, stdout, stderr = self.ssh_client.exec_command(command)
-        print(stdout.read().decode())
+        str1 = stdout.read().decode()
+        f1 = str1[0:5]
+        print(f1)
+        f = open(f1, 'r+')
+        print(f.read())
+
 
     # 此函数用于退出登录
     def ssh_logout(self):
@@ -39,14 +44,17 @@ class MySshClient():
 
 if __name__ == '__main__':
     # 远程主机IP
-    host_ip = '192.168.217.136'
+    # host_ip = '192.168.217.136'
+    host_ip = '192.168.217.129'
     # 远程主机用户名
-    username = 'python'
+    # username = 'python'
+    username = 'hairy'
     # 远程主机密码
-    password = 'lhr308301'
+    password = '308301'
     # 要执行的shell命令；换成自己想要执行的命令
     # 自己使用ssh时，命令怎么敲的command参数就怎么写
-    command = 'whoami'
+    command = "ls"
+    # command = psutil.cpu_times()
     # 实例化
     my_ssh_client = MySshClient()
     # 登录，如果返回结果为1000，那么执行命令，然后退出
