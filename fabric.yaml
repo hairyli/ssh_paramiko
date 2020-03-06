@@ -1,0 +1,12 @@
+fabric:
+  env:
+    roledefs: {
+    'dbserver':['hairy@192.168.217.138:22'],
+    'webserver':['python@192.168.217.137:22'],
+    }
+
+#密码，远程服务器密码不一致时使用，格式user@host:port:pwd
+    passwords: {
+      'hairy@192.168.217.138:22': '308301',
+      'python@192.168.217.137:22': 'lhr308301'
+    }
