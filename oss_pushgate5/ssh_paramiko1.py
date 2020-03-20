@@ -62,12 +62,14 @@ class MySshClient():
                 if 'obdfilter' in line:
                     flag += 1
                     if flag == 1:
-                        res = re.search("((?:[0-9]{1,3}\.){3}[0-9]{1,3})", line)
-                        if res:
-                            server_IP = res.group(1)
+                        try:
+                            res = re.search("((?:[0-9]{1,3}\.){3}[0-9]{1,3})", line)
+                            if res:
+                                server_IP = res.group(1)
+                        except Exception as e:
+                            logging.error(str(e))
 
                     if flag > 1:
-
                         tem_dict = {}
                         li_out.append(tem_dict)
                         store = line.split('.')[1]
@@ -80,18 +82,21 @@ class MySshClient():
                         tem_dict['store'] = store
                         tem_dict['server_IP'] = server_IP
 
-                if 'snapshot_time' in line:
+                elif 'snapshot_time' in line:
                     snapshot_time = line.split('  ')[-1].strip('\r\n')
                     tem_dict['snapshot_time'] = snapshot_time
-                if 'read_bytes' in line:
+
+                elif 'read_bytes' in line:
                     read_bytes = line.split('  ')[-1].split(' ')[-1].strip('\r\n')
                     tem_dict['read_bytes'] = read_bytes
 
-                if 'write_bytes' in line:
+                elif 'write_bytes' in line:
                     write_bytes = line.split('  ')[-1].split(' ')[-1].strip('\r\n')
                     tem_dict['write_bytes'] = write_bytes
 
-            print(li_out)
+                else:
+                    tem_dict = {}
+
             return li_out
 
 
@@ -109,19 +114,22 @@ class MySshClient():
                                   registry=self.registry)
 
         dict_list = self.execute_some_command(command)
+        try:
+            for dict_tmp in dict_list:
+                server_IP = dict_tmp['server_IP']
+                store = dict_tmp['store']
+                client_IP = dict_tmp['client_IP']
+                snapshot_time = dict_tmp['snapshot_time']
+                read_bytes = dict_tmp['read_bytes']
+                write_bytes = dict_tmp['write_bytes']
 
-        for dict_tmp in dict_list:
-            server_IP = dict_tmp['server_IP']
-            store = dict_tmp['store']
-            client_IP = dict_tmp['client_IP']
-            snapshot_time = dict_tmp['snapshot_time']
-            read_bytes = dict_tmp['read_bytes']
-            write_bytes = dict_tmp['write_bytes']
+                self.read_metric.labels(server_IP, store, client_IP, snapshot_time, read_bytes).set(read_bytes)
+                self.write_metric.labels(server_IP, store, client_IP, snapshot_time, write_bytes).set(write_bytes)
 
-            self.read_metric.labels(server_IP, store, client_IP, snapshot_time, read_bytes).set(read_bytes)
-            self.write_metric.labels(server_IP, store, client_IP, snapshot_time, write_bytes).set(write_bytes)
+            pushadd_to_gateway(self.target, job='gene_pushgateway', registry=self.registry, timeout=200)
 
-        pushadd_to_gateway(self.target, job='gene_pushgateway', registry=self.registry, timeout=200)
+        except Exception as e:
+            logging.error(str(e))
 
     def ssh_logout(self):
         logging.warning('will exit host')
@@ -144,4 +152,4 @@ if __name__ == '__main__':
     if my_ssh_client.ssh_login():
         logging.warning("login success, will execute command")
         my_ssh_client.push2gateway()
-        # my_ssh_client.execute_some_command(command)
+
