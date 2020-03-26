@@ -1,0 +1,23 @@
+pushgateway:
+  targets:
+    -  '192.168.217.137:9091'
+    -  '192.168.217.135:9091'
+    -  '192.168.217.134:9091'
+
+ssh:
+  - remote_ips:
+      host: '192.168.217.137'
+      port: 22
+      username: 'python'
+      password: 'lhr308301'
+
+  - remote_ips:
+      host: '192.168.217.138'
+      port: 22
+      username: 'hairy'
+      password: '308301'
+
+
+
+
+
